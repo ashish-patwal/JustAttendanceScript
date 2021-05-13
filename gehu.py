@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
+import sys
+import argparse
 import requests
 from const import URL, params, headers
-from util import calendarWrapper 
+from util import submitAttendance, calenderEvents
 
 # payload = {
 #        'sessid': '2542',
@@ -11,23 +13,41 @@ from util import calendarWrapper
 #        'status': '3365',
 #        'submitbutton': 'Save changes'}
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--events','-e', dest='show_events', action='store_true', help='displays the upcoming events')
+parser.add_argument('--attendance', '-a', dest='mark_attendance', action='store_true', help='marks attendance')
 
-with requests.Session() as session:
-    html = session.get(URL, verify=False, headers=headers)
-    soup = BeautifulSoup(html.content, 'html5lib')
-    params['logintoken'] = soup.find('input', {'name': 'logintoken'})['value']
+args = parser.parse_args()
 
-    print()
-    print('Authenticating with Moodle')
-    print('-'*20)
-    html2 = session.post(URL, verify=False, headers=headers, data=params)
-    if html2.url == URL:
-        print('Wrong Credentials')
-    else:
-        headers.update(session.cookies.get_dict())
-        print('updated cookies for moodle session')
+if len(sys.argv) == 1:
+    print('Please provide arguments')
+
+else:
+    with requests.Session() as session:
+        html = session.get(URL, verify=False, headers=headers)
+        soup = BeautifulSoup(html.content, 'html5lib')
+        params['logintoken'] = soup.find('input', {'name': 'logintoken'})['value']
+
+        print()
+        print('Authenticating with Moodle')
         print('-'*20)
-        print('Submitting attendance if any in calender')
-        print('-'*20)
-        calendarWrapper(session, headers)
+        html2 = session.post(URL, verify=False, headers=headers, data=params)
+        if html2.url == URL:
+            print('Wrong Credentials')
+        else:
+            headers.update(session.cookies.get_dict())
+            print('updated cookies for moodle session')
+            print('-'*20)
+
+            if args.mark_attendance and args.show_events:
+                calenderEvents(session, headers)
+                submitAttendance(session, headers)
+
+            elif args.mark_attendance:
+                submitAttendance(session, headers)
+            
+            elif args.show_events:
+                calenderEvents(session, headers)
+
+                
 
