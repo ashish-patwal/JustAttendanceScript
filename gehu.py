@@ -21,10 +21,13 @@ with requests.Session() as session:
     print('Authenticating with Moodle')
     print('-'*20)
     html2 = session.post(URL, verify=False, headers=headers, data=params)
-    headers.update(session.cookies.get_dict())
-    print('updated cookies for moodle session')
-    print('-'*20)
-    print('Submitting attendance if any in calender')
-    print('-'*20)
-    calendarWrapper(session, headers)
+    if html2.url == URL:
+        print('Wrong Credentials')
+    else:
+        headers.update(session.cookies.get_dict())
+        print('updated cookies for moodle session')
+        print('-'*20)
+        print('Submitting attendance if any in calender')
+        print('-'*20)
+        calendarWrapper(session, headers)
 
